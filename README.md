@@ -25,8 +25,8 @@ PPTGenius 是一个基于大语言模型的智能幻灯片生成系统。项目�
 
 1. 克隆项目
 ```bash
-git clone https://github.com/yourusername/PPTGenius.git
-cd PPTGenius
+git clone https://github.com/simonlisiyu/pptgenius.git
+cd pptgenius
 ```
 
 2. 创建虚拟环境（这里用的python3.9.21）
@@ -83,6 +83,34 @@ docker run -d -p 5000:5000 -v $(pwd)/uploads:/app/uploads pptgenius
    - 支持上传图片和 Excel 表格
    - 支持编辑生成的内容
    - 支持使用自定义模板
+
+## 🚀 快速开始
+
+1. 克隆仓库：
+```bash
+git clone https://github.com/simonlisiyu/pptgenius.git
+cd pptgenius
+```
+
+2. 安装依赖：
+```bash
+pip install -r requirements.txt
+```
+
+3. 配置 LLM API：
+- 在 `config.py` 中设置你的 LLM API 密钥和配置
+
+4. 运行应用：
+```bash
+python app.py
+```
+
+5. 访问应用：
+- 打开浏览器访问 `http://localhost:5000`
+
+## 📺 视频演示
+
+观看项目演示视频：[PPTGenius 演示视频](https://www.bilibili.com/video/BV1v7oxY2EUy/)
 
 ## 📁 项目结构
 
