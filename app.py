@@ -6,6 +6,7 @@ Date: 2024
 """
 
 from flask import Flask, request, jsonify, send_file, render_template, Response, stream_with_context, send_from_directory
+import argparse
 import os
 import tempfile
 from md2ppt import MarkdownToPPT
@@ -41,7 +42,7 @@ def call_llm_api(messages, stream=False):
         payload = {
             "model": config.LLM_MODEL,
             "messages": messages,
-            "stream": config.LLM_REQUEST_CONFIG["stream"],
+            "stream": stream,
             "temperature": config.LLM_REQUEST_CONFIG["temperature"],
             "max_tokens": config.LLM_REQUEST_CONFIG["max_tokens"]
         }
@@ -280,4 +281,10 @@ def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    # app.run(debug=True) 
+    parser = argparse.ArgumentParser(description="Run the Flask app with custom host and port.")
+    
+    parser.add_argument('--host', type=str, default='127.0.0.1', help='The host to bind the server to (default: 127.0.0.1)')
+    parser.add_argument('--port', type=int, default=5000, help='The port to bind the server to (default: 5000)')
+    args = parser.parse_args()
+    app.run(host=args.host, port=args.port, debug=True)
