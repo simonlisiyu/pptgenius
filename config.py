@@ -1,5 +1,5 @@
 # LLM API配置
-LLM_API_URL = "http://llm.demo.haizhi.com/v1/chat/completions"
+LLM_API_URL = "http://x.x.x.x/v1/chat/completions"
 
 # LLM模型配置
 LLM_MODEL = "Qwen2.5-32B-Instruct-AWQ"

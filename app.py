@@ -13,11 +13,12 @@ import requests
 import json
 import pandas as pd
 from werkzeug.utils import secure_filename
+import config
 
 app = Flask(__name__)
 
 # 自定义LLM API配置
-LLM_API_URL = "http://llm.demo.haizhi.com/v1/chat/completions"
+LLM_API_URL = config.LLM_API_URL
 
 # 配置上传文件存储路径
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -38,9 +39,11 @@ def call_llm_api(messages, stream=False):
         }
         
         payload = {
-            "model": "Qwen2.5-32B-Instruct-AWQ",
+            "model": config.LLM_MODEL,
             "messages": messages,
-            "stream": stream
+            "stream": config.LLM_REQUEST_CONFIG["stream"],
+            "temperature": config.LLM_REQUEST_CONFIG["temperature"],
+            "max_tokens": config.LLM_REQUEST_CONFIG["max_tokens"]
         }
         
         response = requests.post(LLM_API_URL, headers=headers, json=payload, stream=stream)
