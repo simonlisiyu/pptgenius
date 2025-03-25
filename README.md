@@ -110,9 +110,11 @@ PPTGenius/
 
 本项目采用 MIT 协议开源。详见 [LICENSE](LICENSE) 文件。
 
-## 👨‍💻 作者
+## 👤 作者
 
-- lisiyu
+- **lisiyu**
+  - 邮箱：lhchlsy2000@163.com
+  - 微信：![WeChat](wechat.jpg)
 
 ## 🙏 致谢
 
