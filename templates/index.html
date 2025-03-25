@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPTGenius 智能幻灯</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .step-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .topic-item {
+            cursor: pointer;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .topic-item:hover {
+            background-color: #f8f9fa;
+        }
+        .topic-item.selected {
+            background-color: #e7f3ff;
+            border-color: #007bff;
+        }
+        /* 添加加载状态样式 */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loading-content {
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            color: #333;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 禁用按钮样式 */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 添加文件上传区域样式 */
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        
+        .upload-area .upload-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .upload-area .upload-text {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">智能PPT生成器</h1>
+        
+        <!-- 步骤1：基本信息 -->
+        <div id="step1" class="step-container">
+            <h3><span class="step-number">1</span>基本信息</h3>
+            <div class="mb-3">
+                <label for="role" class="form-label">角色</label>
+                <input type="text" class="form-control" id="role" placeholder="例如：营销专家、技术专家">
+            </div>
+            <div class="mb-3">
+                <label for="title" class="form-label">主题</label>
+                <input type="text" class="form-control" id="title" placeholder="请输入PPT的主题">
+            </div>
+            <div class="mb-3">
+                <label for="topicNum" class="form-label">生成主题数量</label>
+                <input type="number" class="form-control" id="topicNum" value="3" min="1" max="10">
+            </div>
+            <div class="mb-3">
+                <label for="template" class="form-label">PPT模板（可选）</label>
+                <input type="file" class="form-control" id="template" accept=".pptx">
+            </div>
+            <button class="btn btn-primary" id="generateTopicsBtn" onclick="generateTopics()">生成主题建议</button>
+        </div>
+
+        <!-- 步骤2：主题选择 -->
+        <div id="step2" class="step-container hidden">
+            <h3><span class="step-number">2</span>主题选择</h3>
+            <div id="topicList" class="mb-3"></div>
+            <div class="mb-3">
+                <label for="customTopic" class="form-label">自定义主题</label>
+                <input type="text" class="form-control" id="customTopic">
+            </div>
+            <button class="btn btn-primary" id="generateOutlineBtn" onclick="generateOutline()">生成大纲</button>
+        </div>
+
+        <!-- 步骤3：大纲编辑 -->
+        <div id="step3" class="step-container hidden">
+            <h3><span class="step-number">3</span>大纲编辑</h3>
+            <div class="mb-3">
+                <label for="outline" class="form-label">大纲内容</label>
+                <textarea class="form-control" id="outline" rows="10"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="contentRequirement" class="form-label">内容要求</label>
+                <textarea class="form-control" id="contentRequirement" rows="3" 
+                    placeholder="请输入对内容的具体要求，例如：专业性、通俗易懂、案例丰富等"></textarea>
+            </div>
+            <button class="btn btn-primary" id="generateContentBtn" onclick="generateContent()">生成内容</button>
+        </div>
+
+        <!-- 步骤4：内容编辑 -->
+        <div id="step4" class="step-container hidden">
+            <h3><span class="step-number">4</span>内容编辑</h3>
+            <div class="mb-3">
+                <label for="content" class="form-label">Markdown内容</label>
+                <textarea class="form-control resizable-textarea" id="content" rows="15"></textarea>
+            </div>
+            
+            <!-- 添加文件上传区域 -->
+            <div class="mb-3">
+                <div class="upload-area" onclick="document.getElementById('imageUpload').click()">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击上传图片</div>
+                    <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="upload-area" onclick="document.getElementById('excelUpload').click()">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">点击上传Excel表格</div>
+                    <input type="file" id="excelUpload" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="regenerateContentBtn" onclick="regenerateContent()">重新生成</button>
+                <button class="btn btn-primary" id="generatePPTBtn" onclick="generatePPT()">生成PPT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加加载状态HTML -->
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">正在生成内容，请稍候...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showStep(stepNumber) {
+            document.querySelectorAll('.step-container').forEach(container => {
+                container.classList.add('hidden');
+            });
+            document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // 禁用按钮
+        function disableButton(buttonId) {
+            document.getElementById(buttonId).disabled = true;
+        }
+        
+        // 启用按钮
+        function enableButton(buttonId) {
+            document.getElementById(buttonId).disabled = false;
+        }
+
+        async function generateTopics() {
+            const role = document.getElementById('role').value;
+            const title = document.getElementById('title').value;
+            const topicNum = document.getElementById('topicNum').value;
+            
+            if (!role || !title || !topicNum) {
+                alert('请填写所有必填项');
+                return;
+            }
+            
+            showLoading();
+            disableButton('generateTopicsBtn');
+            
+            try {
+                const response = await fetch('/api/generate_topics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ role, title, topicNum })
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const topicList = document.getElementById('topicList');
+                topicList.innerHTML = '';
+                data.topics.forEach(topic => {
+                    const div = document.createElement('div');
+                    div.className = 'topic-item';
+                    div.textContent = topic;
+                    div.onclick = () => selectTopic(div);
+                    topicList.appendChild(div);
+                });
+                
+                showStep(2);
+            } catch (error) {
+                alert('生成主题失败: ' + error.message);
+            } finally {
+                hideLoading();
+                enableButton('generateTopicsBtn');
+            }
+        }
+
+        function selectTopic(element) {
+            document.querySelectorAll('.topic-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            document.getElementById('customTopic').value = element.textContent;
+        }
+
+        async function generateOutline() {
+            const topic = document.getElementById('customTopic').value;
+            const role = document.getElementById('role').value;
+            if (!topic) {
+                alert('请选择或输入主题');
+                return;
+            }
+            if (!role) {
+                alert('请填写角色信息');
+                return;
+            }
+
+            showLoading();
+            disableButton('generateOutlineBtn');
+            
+            // 立即显示下一步骤
+            showStep(3);
+            
+            const outlineTextarea = document.getElementById('outline');
+            outlineTextarea.value = '';
+            
+            try {
+                const response = await fetch('/api/generate_outline', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        role: role,
+                        title: topic,
+                        topic: topic
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataStr = line.slice(6);
+                            if (dataStr === '[DONE]') {
+                                continue;
+                            }
+                            try {
+                                const data = JSON.parse(dataStr);
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
+                                if (data.content) {
+                                    outlineTextarea.value += data.content;
+                                }
+                            } catch (e) {
+                                console.error('解析数据失败:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                alert('生成大纲失败: ' + error.message);
+            } finally {
+                hideLoading();
+                enableButton('generateOutlineBtn');
+            }
+        }
+
+        async function generateContent() {
+            const outline = document.getElementById('outline').value;
+            const requirement = document.getElementById('contentRequirement').value;
+
+            if (!outline) {
+                alert('请先生成大纲');
+                return;
+            }
+
+            showLoading();
+            disableButton('generateContentBtn');
+            
+            // 立即显示下一步骤
+            showStep(4);
+            
+            const contentTextarea = document.getElementById('content');
+            contentTextarea.value = '';
+            
+            try {
+                const response = await fetch('/api/generate_content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ outline, requirement })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataStr = line.slice(6);
+                            if (dataStr === '[DONE]') {
+                                continue;
+                            }
+                            try {
+                                const data = JSON.parse(dataStr);
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
+                                if (data.content) {
+                                    contentTextarea.value += data.content;
+                                }
+                            } catch (e) {
+                                console.error('解析数据失败:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                alert('生成内容失败: ' + error.message);
+            } finally {
+                hideLoading();
+                enableButton('generateContentBtn');
+            }
+        }
+
+        async function regenerateContent() {
+            await generateContent();
+        }
+
+        async function generatePPT() {
+            const content = document.getElementById('content').value;
+            const templateFile = document.getElementById('template').files[0];
+
+            if (!content) {
+                alert('请先生成内容');
+                return;
+            }
+
+            showLoading();
+            disableButton('generatePPTBtn');
+            
+            try {
+                const formData = new FormData();
+                formData.append('content', content);
+                if (templateFile) {
+                    formData.append('template', templateFile);
+                }
+
+                const response = await fetch('/api/generate_ppt', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '生成PPT失败');
+                }
+
+                // 创建一个下载链接
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'output.pptx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert('生成PPT失败: ' + error.message);
+            } finally {
+                hideLoading();
+                enableButton('generatePPTBtn');
+            }
+        }
+
+        // 添加图片上传处理函数
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('/api/upload_image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 在光标位置插入图片markdown
+                const contentTextarea = document.getElementById('content');
+                const start = contentTextarea.selectionStart;
+                const end = contentTextarea.selectionEnd;
+                const text = contentTextarea.value;
+                const before = text.substring(0, start);
+                const after = text.substring(end);
+                contentTextarea.value = before + data.markdown + after;
+                
+                // 恢复光标位置
+                contentTextarea.selectionStart = contentTextarea.selectionEnd = start + data.markdown.length;
+            } catch (error) {
+                alert('上传图片失败: ' + error.message);
+            }
+        }
+        
+        // 添加Excel上传处理函数
+        async function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('excel', file);
+                
+                const response = await fetch('/api/upload_excel', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 在光标位置插入表格markdown
+                const contentTextarea = document.getElementById('content');
+                const start = contentTextarea.selectionStart;
+                const end = contentTextarea.selectionEnd;
+                const text = contentTextarea.value;
+                const before = text.substring(0, start);
+                const after = text.substring(end);
+                contentTextarea.value = before + data.markdown + after;
+                
+                // 恢复光标位置
+                contentTextarea.selectionStart = contentTextarea.selectionEnd = start + data.markdown.length;
+            } catch (error) {
+                alert('上传Excel失败: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html> 
